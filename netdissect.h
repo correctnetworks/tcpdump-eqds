@@ -290,6 +290,8 @@ extern void nd_pop_all_packet_info(netdissect_options *);
 #define PT_PTP		18	/* PTP */
 #define PT_SOMEIP	19	/* Autosar SOME/IP Protocol */
 #define PT_DOMAIN	20	/* Domain Name System (DNS) */
+#define PT_EQDS	 21	/* Edge-Queued Datagram Service (EQDS) */
+
 
 #define ND_MIN(a,b) ((a)>(b)?(b):(a))
 #define ND_MAX(a,b) ((b)>(a)?(b):(a))
@@ -729,6 +731,7 @@ extern void vrrp_print(netdissect_options *, const u_char *, u_int, const u_char
 extern void vtp_print(netdissect_options *, const u_char *, u_int);
 extern void vxlan_gpe_print(netdissect_options *, const u_char *, u_int);
 extern void vxlan_print(netdissect_options *, const u_char *, u_int);
+extern void eqds_print(netdissect_options *, const u_char *, u_int);
 extern void wb_print(netdissect_options *, const u_char *, u_int);
 extern void zep_print(netdissect_options *, const u_char *, u_int);
 extern void zephyr_print(netdissect_options *, const u_char *, int);

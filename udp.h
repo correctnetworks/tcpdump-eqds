@@ -188,6 +188,9 @@ struct udphdr {
 #ifndef VXLAN_PORT
 #define VXLAN_PORT			4789	/* RFC 7348 */
 #endif
+#ifndef EQDS_PORT
+#define EQDS_PORT			666	/*  */
+#endif
 #ifndef VXLAN_GPE_PORT
 #define VXLAN_GPE_PORT			4790	/* draft-ietf-nvo3-vxlan-gpe-01 */
 #endif

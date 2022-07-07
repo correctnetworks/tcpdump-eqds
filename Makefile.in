@@ -131,6 +131,7 @@ LIBNETDISSECT_SRC=\
 	print-egp.c \
 	print-eigrp.c \
 	print-enc.c \
+	print-eqds.c \
 	print-esp.c \
 	print-ether.c \
 	print-fddi.c \
@@ -250,7 +251,7 @@ LIBNETDISSECT_SRC=\
 	print-zeromq.c \
 	signature.c \
 	strtoaddr.c \
-	util-print.c
+	util-print.c 
 
 LOCALSRC = @LOCALSRC@
 LIBOBJS = @LIBOBJS@
