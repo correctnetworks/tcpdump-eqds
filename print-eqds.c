@@ -43,15 +43,15 @@
 #define NDP_FLAG_TRIMMED (1 << 7)
 
 static const struct tok eqds_flags [] = {
-  { 1<<7, "TRIM" },
-  { 1<<6, "FIN" },  
-  { 1<<5, "PAUSE" },
-  { 1<<4, "EMPTY" },  
-  { 1<<3, "ACK" },  
-  { 1<<2, "SACK" },
-  { 1<<1, "NACK" },
-  { 1<<0, "SYN" },
-  { 0, NULL }
+    { 1<<7, "TRIM" },
+    { 1<<6, "FIN" },  
+    { 1<<5, "PAUSE" },
+    { 1<<4, "EMPTY" },  
+    { 1<<3, "ACK" },  
+    { 1<<2, "SACK" },
+    { 1<<1, "NACK" },
+    { 1<<0, "SYN" },
+    { 0, NULL }
 };
 
 #define EQDS_HDR_LEN 8
@@ -73,83 +73,84 @@ eqds_print(netdissect_options *ndo, const u_char *bp, u_int len)
     len -= 1;
     ND_PRINT("[%s], ", bittok2str_nosep(eqds_flags, "none", flags));
 
-    if ((flags & NDP_FLAG_SACK) || (flags & NDP_FLAG_ACK) || (flags & NDP_FLAG_NACK)){
-      //this is a control header.
-      uint8_t pull_sender_id = GET_U_1(bp);
-      bp += 1;
-      len -= 1;
-      uint16_t busy_time = GET_BE_U_2(bp);
-      bp += 2;
-      len -= 2;      
-      uint16_t ackno = GET_BE_U_2(bp);
-      bp += 2;
-      len -= 2;
-      uint16_t pullno = GET_BE_U_2(bp);
-      bp += 2;
-      len -= 2;
+    if ((flags & NDP_FLAG_SACK) || (flags & NDP_FLAG_ACK) || (flags & NDP_FLAG_NACK)) {
+        /*
+         * This is a control header.
+         */
+        uint8_t path_id = GET_U_1(bp);
+        bp += 1;
+        len -= 1;
+        uint16_t wsize = GET_BE_U_2(bp);
+        bp += 2;
+        len -= 2;      
+        uint16_t ackno = GET_BE_U_2(bp);
+        bp += 2;
+        len -= 2;
+        uint16_t pullno = GET_BE_U_2(bp);
+        bp += 2;
+        len -= 2;
 
-      if (flags & NDP_FLAG_SACK)
-	ND_PRINT("SACK %u, PULL %u",ackno,pullno);
-      else if (flags & NDP_FLAG_NACK)
-	ND_PRINT("NACK %u, PULL %u",ackno,pullno);
-      else if (flags & NDP_FLAG_ACK)
-	ND_PRINT("ACK %u, PULL %u",ackno,pullno);      
-      else
-        ND_PRINT("ERROR: unknown flags");
+        if (flags & NDP_FLAG_SACK)
+            ND_PRINT("SACK %u, PULL %u", ackno, pullno);
+        else if (flags & NDP_FLAG_NACK)
+            ND_PRINT("NACK %u, PULL %u", ackno, pullno);
+        else if (flags & NDP_FLAG_ACK)
+            ND_PRINT("ACK %u, PULL %u", ackno, pullno);      
+        else
+            ND_PRINT("ERROR: unknown flags");
 
-      if (ndo->ndo_vflag) 
-	ND_PRINT(" [Busy %u, Pull Sender Id %u]",busy_time,pull_sender_id);
+        if (ndo->ndo_vflag) 
+            ND_PRINT(" [Wsize %u, Path ID %u]", wsize, path_id);
+      
+        ND_PRINT(": ");
+        return;
+    } else {
+        /* 
+         * This is a data header
+         */
+        uint8_t path_id = GET_U_1(bp);
+        bp += 1;
+        len -= 1;
 
-      ND_PRINT(": ");
-      return;
+        uint8_t next_proto = GET_U_1(bp);
+        bp += 1;
+        len -= 1;
+            
+        uint16_t rsvd = GET_U_1(bp);
+        bp += 1;
+        len -= 1;                  
+            
+        uint16_t seqno = GET_BE_U_2(bp);
+        bp += 2;
+        len -= 2;
+            
+        uint8_t pull_target = GET_BE_U_2(bp);
+        bp += 2;
+        len -= 2;
+
+        ND_PRINT("Seq %u, Pull Target %u", seqno, pull_target);
+
+        if (ndo->ndo_vflag)
+            ND_PRINT(" [Path ID %u RSVD %u]", path_id, rsvd);
+
+        ND_PRINT(": ");
+
+        if (!(flags & NDP_FLAG_TRIMMED)){
+            switch (next_proto) {
+                case 4:
+                    ip_print(ndo, bp, len);
+                    break;
+                case 0xFC:
+                    ND_PRINT("EQDS Native Protocol");
+                    break;
+                default:
+                    ND_PRINT("ERROR: unknown-next-protocol %u", next_proto);
+                    goto invalid;
+            }
+        }
     }
-    else {
-      //this is a data header
-      uint8_t next_protocol;
 
-      next_protocol = GET_U_1(bp);
-      bp += 1;
-      len -= 1;
-
-      uint16_t seqno = GET_BE_U_2(bp);
-      bp += 2;
-      len -= 2;
-      
-      uint16_t pull_target = GET_BE_U_2(bp);
-      bp += 2;
-      len -= 2;                  
-      
-      uint8_t path_id = GET_U_1(bp);
-      bp++;
-      len--;
-      
-      uint8_t sender_id = GET_U_1(bp);
-      bp ++;
-      len --;
-
-      ND_PRINT("Seq %u, Pull Target %u", seqno, pull_target);
-
-      if (ndo->ndo_vflag)
-	ND_PRINT(" [Path %u Sender %u]",path_id,sender_id);
-
-      ND_PRINT(": ");
-
-      if (!(flags & NDP_FLAG_TRIMMED)){
-	switch (next_protocol) {
-	case 4:
-	  ip_print(ndo, bp, len);
-	  break;
-	case 0xFC:
-	  ND_PRINT("EQDS Native Protocol");
-        break;
-	default:
-	  ND_PRINT("ERROR: unknown-next-protocol %u",next_protocol);
-	  goto invalid;
-	}
-      }
-    }
-
-    invalid:
+invalid:
     nd_print_invalid(ndo);
 }
 
