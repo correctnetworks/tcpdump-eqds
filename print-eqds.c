@@ -148,6 +148,7 @@ eqds_print(netdissect_options *ndo, const u_char *bp, u_int len)
                     goto invalid;
             }
         }
+        return;
     }
 
 invalid:
